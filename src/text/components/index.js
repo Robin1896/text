@@ -17,6 +17,7 @@ class Text extends React.Component {
         distanceLeftBottom:[],
         border: [],
         plotters:[],
+        totalPercentage: [],
     };
     this.imageRef = React.createRef()
     this.onImgLoad = this.onImgLoad.bind(this);
@@ -67,24 +68,42 @@ class Text extends React.Component {
     }
 
     objectPlotting = (object) => {
-        console.log(object)
-        for(let i = 0; i < object.length; i++){ 
-            var x1object = object[i].boundingBox.vertices[0].x;
-            var y1object = object[i].boundingBox.vertices[1].y;
-            var left = x1object;
-            var top = y1object;
-            var width = object[i].boundingBox.vertices[1].x - object[i].boundingBox.vertices[0].x;
-            var height = object[i].boundingBox.vertices[2].y - object[i].boundingBox.vertices[1].y;
+        var objective = object.blocks
+        var totalPercentage = 0;
+        for(let i = 0; i < objective.length; i++){ 
+            var width = objective[i].boundingBox.vertices[1].x - objective[i].boundingBox.vertices[0].x;
+            var height = objective[i].boundingBox.vertices[2].y - objective[i].boundingBox.vertices[1].y;
+            if(isNaN(width)) {
+                width = objective[i].boundingBox.vertices[1].x;
+            }
+            if(isNaN(height)) {
+                height = objective[i].boundingBox.vertices[2].y;
+            }
+            
             var surfaceText = width*height;
             var surfaceTotal = this.state.height*this.state.width;
-            console.log("percentage = " + ((surfaceText/surfaceTotal)*100).toFixed(1) + "%")
-            
+            var individualPercentage = (surfaceText/surfaceTotal)*100
+            totalPercentage = totalPercentage + individualPercentage 
         }
+        
+        this.setState({totalPercentage: totalPercentage})
+ 
 
-        const plotters = object.blocks?.map((plotItems) => 
-        <div>
-            <div style={{ borderStyle:"solid",  borderColor:"yellow", zIndex:10, height: plotItems.boundingBox.vertices[2].y - plotItems.boundingBox.vertices[1].y, width:plotItems.boundingBox.vertices[1].x - plotItems.boundingBox.vertices[0].x, position:"absolute", left: plotItems.boundingBox.vertices[0].x, top:plotItems.boundingBox.vertices[1].y}}></div>
-        </div>
+        const plotters = object.blocks?.map((plotItems) => {
+            var width = plotItems.boundingBox.vertices[1].x - plotItems.boundingBox.vertices[0].x;
+            var height = plotItems.boundingBox.vertices[2].y - plotItems.boundingBox.vertices[1].y;
+            if(isNaN(width)) {
+                width = plotItems.boundingBox.vertices[1].x;
+            }
+            if(isNaN(height)) {
+                height = plotItems.boundingBox.vertices[2].y;
+            }
+            
+            return(
+            <div>
+                <div style={{ borderStyle:"solid",  borderColor:"yellow", zIndex:10, height: height, width:width, position:"absolute", left: plotItems.boundingBox.vertices[0].x, top:plotItems.boundingBox.vertices[1].y}}></div>
+            </div>
+            )}
     );
     this.setState({plotters : plotters})
 
@@ -96,10 +115,9 @@ render() {
 return (
 <div className="text">
     <div className="text__image">
-            {/* {this.state.textAnnotation} */}
             {this.state.plotters}
         <img ref={this.dimensions} onLoad={this.onImgLoad} src={this.state.base64} alt="afbeelding" />
-        {"Percentage opname text" } %
+        {"Percentage opname text" + this.state.totalPercentage } %
     </div>
 
     <button onClick={this.handleSubmit}>Save</button>
